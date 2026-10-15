@@ -4,14 +4,7 @@ from openai import OpenAI
 
 load_dotenv()
 
-# One client, one key: used for both Whisper (speech-to-text) and GPT (translation)
-client = OpenAI(
-    api_key=os.environ["EURI_API_KEY"],
-    base_url="https://api.euron.one/api/v1/euri",
-)
-
 STT_MODEL = os.getenv("EURI_STT_MODEL", "openai/whisper-large-v3-turbo")
-# Set this to the same GPT model name you already use elsewhere in the project
 CHAT_MODEL = os.getenv("EURI_CHAT_MODEL", "gpt-4.1-mini")
 
 # Romanised Hinglish prompt nudges Whisper toward Latin script instead of Devanagari
@@ -21,12 +14,24 @@ HINGLISH_PROMPT = (
 )
 
 
+def get_client() -> OpenAI:
+    """Get the OpenAI client configured for Euri, raising a clean error if API key is missing."""
+    api_key = os.getenv("EURI_API_KEY")
+    if not api_key:
+        raise ValueError("EURI_API_KEY environment variable is missing. Please set it in your environment or .env file.")
+    return OpenAI(
+        api_key=api_key,
+        base_url="https://api.euron.one/api/v1/euri",
+    )
+
+
 def transcribe_chunk(chunk_path: str, language: str = "english") -> str:
     """
     Transcribe one chunk with whisper-large-v3-turbo via Euri.
     - english  -> language pinned to 'en'
     - hinglish -> auto-detect, steered toward romanised Hinglish
     """
+    client = get_client()
     kwargs = {"model": STT_MODEL}
 
     if language.lower() == "english":
@@ -42,6 +47,7 @@ def transcribe_chunk(chunk_path: str, language: str = "english") -> str:
 
 def translate_to_english(text: str) -> str:
     """Convert a Hindi/Hinglish transcript to clean English using the GPT model."""
+    client = get_client()
     resp = client.chat.completions.create(
         model=CHAT_MODEL,
         temperature=0,

@@ -12,7 +12,7 @@ from datetime import datetime
 import streamlit as st
 from dotenv import load_dotenv
 
-from utils.audio_processor import process_input
+from utils.audio_processor import process_input, cleanup_temp_files
 from core.transcriber import transcribe_all
 from core.summarize import summarize, generate_title
 from core.extractor import extract_action_items, extract_key_decisions, extract_questions
@@ -184,6 +184,7 @@ def run_pipeline_with_progress(source: str, language: str) -> dict:
 
         chunks = step(0, steps[0][0], process_input, source)
         transcript = step(1, steps[1][0], transcribe_all, chunks, language)
+        cleanup_temp_files(chunks)
         result["transcript"] = transcript
         result["title"] = step(2, steps[2][0], generate_title, transcript)
         result["summary"] = step(3, steps[3][0], summarize, transcript)
@@ -204,6 +205,10 @@ def run_pipeline_with_progress(source: str, language: str) -> dict:
 with st.sidebar:
     st.markdown("## 🎬 AI Video Assistant")
     st.caption("Turn any meeting or video into a summary, action items and a chat.")
+
+    if not os.getenv("EURI_API_KEY"):
+        st.warning("⚠️ **EURI_API_KEY** is not set. Please set it in your environment or `.env` file.")
+
     st.divider()
 
     input_mode = st.radio("Source", ["YouTube URL", "Upload file"], horizontal=True)

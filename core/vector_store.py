@@ -1,4 +1,5 @@
 import os 
+import chromadb
 from langchain_chroma import Chroma 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -28,12 +29,18 @@ def build_vector_store(transcript : str)->Chroma:
         for i,chunk in enumerate(chunks)
     ]
 
+    client = chromadb.PersistentClient(path=CHROMA_DIR)
+    try:
+        client.delete_collection(COLLECTION_NAME)
+    except Exception:
+        pass
+
     embeddings = get_embeddings()
     vector_store = Chroma.from_documents(
         documents= docs,
         embedding=embeddings,
         collection_name=COLLECTION_NAME,
-        persist_directory=CHROMA_DIR
+        client=client
     )
 
     return vector_store

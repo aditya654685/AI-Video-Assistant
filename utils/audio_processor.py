@@ -60,6 +60,8 @@ def download_youtube_audio(url: str) -> str:
             }
         ],
         "quiet": True,
+        "no_warnings": True,
+        "nocheckcertificate": True,
     }
     if FFMPEG_PATH:
         ydl_opts["ffmpeg_location"] = os.path.dirname(FFMPEG_PATH)
@@ -76,14 +78,15 @@ def download_youtube_audio(url: str) -> str:
     return filename
 
 def convert_to_wav(input_path: str) -> str:
-    """Convert any audio/video file to WAV format using pydub."""
+    """Convert any audio/video file to 16kHz mono WAV format."""
     output_path = os.path.splitext(input_path)[0] + "_converted.wav"
     audio = AudioSegment.from_file(input_path)
-    audio = audio.set_channels(1).set_frame_rate(16000)  # 16khz
+    audio = audio.set_channels(1).set_frame_rate(16000)  # 16khz mono
     audio.export(output_path, format="wav")
     return output_path
 
-def chunk_audio(wav_path: str, chunk_minutes: int = 10) -> list:
+def chunk_audio(wav_path: str, chunk_minutes: int = 8) -> list:
+    """Split audio into chunks guaranteed to be under OpenAI 25MB limit."""
     audio = AudioSegment.from_wav(wav_path)
     chunk_ms = chunk_minutes * 60 * 1000
 
@@ -96,10 +99,22 @@ def chunk_audio(wav_path: str, chunk_minutes: int = 10) -> list:
 
     return chunks
 
+def cleanup_temp_files(file_paths: list):
+    """Safely remove temporary audio files."""
+    for path in file_paths:
+        if path and os.path.exists(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
 def process_input(source: str) -> list:
     if source.startswith("http://") or source.startswith("https://"):
         print("Detected YouTube URL. Downloading audio...")
-        wav_path = download_youtube_audio(source)
+        raw_path = download_youtube_audio(source)
+        print("Normalizing audio to 16kHz mono...")
+        wav_path = convert_to_wav(raw_path)
+        cleanup_temp_files([raw_path])
     else:
         print("Detected local file. Converting to WAV...")
         wav_path = convert_to_wav(source)
@@ -108,3 +123,4 @@ def process_input(source: str) -> list:
     chunks = chunk_audio(wav_path)
     print(f"Audio ready — {len(chunks)} chunk(s) created.")
     return chunks
+
