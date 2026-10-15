@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ai-video-assistant
+    runtime: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: EURI_API_KEY
+        sync: false
