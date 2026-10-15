@@ -1,0 +1,32 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables & secrets
+.env
+*.env
+
+# Python cache & build files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Local media downloads
+downloades/
+downloads/
+*.mp4
+*.mp3
+*.wav
+
+# Local vector database
+vector_db/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
