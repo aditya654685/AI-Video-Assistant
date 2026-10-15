@@ -36,8 +36,8 @@ An AI-powered video processing assistant that extracts audio from videos (YouTub
 
 ### 1. Clone the Repository
 ```bash
-git clone <YOUR_REPO_URL>
-cd "Video Agent"
+git clone https://github.com/aditya654685/AI-Video-Assistant.git
+cd AI-Video-Assistant
 ```
 
 ### 2. Set Up Virtual Environment
